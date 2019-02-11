@@ -4,9 +4,13 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StringUtils;
 import javax.xml.ws.Holder;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,24 +27,27 @@ public class RoadMapLoader {
         this.roadMapFactory = roadMapFactory;
     }
 
-    public RoadMap load(String filename) throws IOException, URISyntaxException {
-        try (Stream<String> lines = Files.lines(Paths.get(ClassLoader.getSystemResource(filename).toURI()))) {
-            Holder<Integer> line = new Holder<>(1);
+    public RoadMap load(String filename) {
+        try (InputStream stream = new ClassPathResource(filename).getInputStream()) {
+            Stream<String> lines = new BufferedReader(new InputStreamReader(stream)).lines();
+            Holder<Integer> lineNumber = new Holder<>(1);
             SetMultimap<String, String> mm = LinkedHashMultimap.create();
             lines.forEach(l -> {
                 String[] pair = l.split(SEPARATOR);
                 if (pair.length != 2) {
-                    LOGGER.error("line {} error: expected 2 comma separate values, got {}. Skipping", line.value, pair.length);
+                    LOGGER.error("line {} error: expected 2 comma separate values, got {}. Skipping", lineNumber.value, pair.length);
                     return;
                 }
                 if (!StringUtils.hasText(pair[0]) || !StringUtils.hasText(pair[1])) {
-                    LOGGER.error("line {} error: values cannot be empty", line.value);
+                    LOGGER.error("line {} error: values cannot be empty", lineNumber.value);
                     return;
                 }
                 mm.put(pair[0].trim().toLowerCase(), pair[1].trim().toLowerCase());
-                ++line.value;
+                ++lineNumber.value;
             });
             return roadMapFactory.apply(mm);
+        } catch (IOException e) {
+            throw new RuntimeException("unable to read resource '" + filename + "'", e);
         }
     }
 }
