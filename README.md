@@ -13,8 +13,8 @@ How to build and run
 -------------
 Assumptions: JAVA_HOME is set, java and maven executables are available in PATH
 
-* Run straight away using Maven: mvn spring-boot:run
+* Run straight away using Maven: `mvn spring-boot:run`
 * Build and run standalone jar application
-    * mvn package
-    * java -jar target/code-challenge-1.0-SNAPSHOT.jar
+    * `mvn package`
+    * `java -jar target/code-challenge-1.0-SNAPSHOT.jar`
     
